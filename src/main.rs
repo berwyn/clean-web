@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use clipboard::Clipboard;
 use tray::TrayIcon;
 use url::Url;

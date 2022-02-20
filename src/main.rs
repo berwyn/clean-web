@@ -1,6 +1,8 @@
 #![windows_subsystem = "windows"]
 
 use clipboard::Clipboard;
+use config::Config;
+use once_cell::sync::Lazy;
 use tray::TrayIcon;
 use url::Url;
 use window::Window;
@@ -10,6 +12,7 @@ use windows::Win32::{
 };
 
 mod clipboard;
+mod config;
 mod tray;
 mod window;
 
@@ -17,7 +20,21 @@ const WINDOW_CLASS_NAME: &str = "CleanWeb";
 
 pub type Win32Result<T> = Result<T, windows::core::Error>;
 
+static CONFIG: Lazy<Config> = Lazy::new(|| {
+    if let Some(dirs) = directories::ProjectDirs::from("dev.berwyn", "CleanWeb", "CleanWeb") {
+        let path = dirs.config_dir();
+        let mut path = path.to_owned();
+        path.push("config.csv");
+
+        path.try_into().unwrap_or_default()
+    } else {
+        Default::default()
+    }
+});
+
 fn main() {
+    CONFIG.ensure_exists().expect("Unable to load config");
+
     let window = Window::new(WINDOW_CLASS_NAME, Some(message_handler)).unwrap();
     // Using this to let `Drop` clean up the tray icon
     let _tray_icon = TrayIcon::try_from(&window).unwrap();
@@ -68,7 +85,14 @@ fn mangle_url(text: &str) -> String {
     match Url::parse(text) {
         Err(_) => text.to_owned(),
         Ok(mut url) => {
-            if url.host_str() == Some("twitter.com") {
+            if !url.has_host() {
+                return url.to_string();
+            }
+
+            let host = url.host().unwrap().to_string();
+
+            // TODO: Move this into a default config
+            if host == "twitter.com" {
                 let mut permissable_pairs = Vec::new();
                 for (key, value) in url.query_pairs() {
                     if key != "t" && key != "s" {
@@ -84,11 +108,30 @@ fn mangle_url(text: &str) -> String {
                         .extend_pairs(permissable_pairs.iter())
                         .finish();
                 }
-
-                url.to_string()
-            } else {
-                text.to_owned()
             }
+
+            for (host_regex, param_regex) in CONFIG.iter() {
+                if host_regex.is_match(&host) {
+                    let mut permissable_pairs = Vec::new();
+
+                    for (key, value) in url.query_pairs() {
+                        if !param_regex.is_match(&key) {
+                            permissable_pairs.push((key.into_owned(), value.into_owned()));
+                        }
+                    }
+
+                    if permissable_pairs.is_empty() {
+                        url.set_query(None);
+                    } else {
+                        url.query_pairs_mut()
+                            .clear()
+                            .extend_pairs(permissable_pairs.iter())
+                            .finish();
+                    }
+                }
+            }
+
+            url.to_string()
         }
     }
 }

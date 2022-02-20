@@ -1,7 +1,6 @@
 use std::{ops::Deref, path::PathBuf};
 
 use regex::Regex;
-use serde::Deserialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
@@ -74,10 +73,10 @@ impl TryFrom<PathBuf> for Config {
         let mut entries = Vec::new();
         let mut reader = csv::Reader::from_path(path)?;
         for result in reader.deserialize() {
-            let record: ConfigEntry = result?;
+            let record: (String, String) = result?;
 
-            let host_regex = Regex::new(&record.host_regex)?;
-            let param_regex = Regex::new(&record.param_regex)?;
+            let host_regex = Regex::new(&record.0)?;
+            let param_regex = Regex::new(&record.1)?;
 
             entries.push((host_regex, param_regex));
         }
@@ -92,10 +91,4 @@ impl Deref for Config {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
-}
-
-#[derive(Deserialize)]
-struct ConfigEntry {
-    host_regex: String,
-    param_regex: String,
 }

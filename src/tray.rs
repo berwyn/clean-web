@@ -18,7 +18,7 @@ const NIM_DELETE: u32 = 0x2;
 const NOTIFICATION_ID: u32 = 0xDEADBEEF;
 
 static ICON: Lazy<HICON> =
-    Lazy::new(|| unsafe { LoadIconW(GetModuleHandleW(None), makeintresourcew(69)) });
+    Lazy::new(|| unsafe { LoadIconW(GetModuleHandleW(None), MAKEINTRESOURCEW(69)) });
 
 fn create_notification_data(hwnd: HWND) -> NOTIFYICONDATAW {
     NOTIFYICONDATAW {
@@ -31,7 +31,8 @@ fn create_notification_data(hwnd: HWND) -> NOTIFYICONDATAW {
     }
 }
 
-unsafe fn makeintresourcew(res: u16) -> PWSTR {
+#[allow(non_snake_case)]
+unsafe fn MAKEINTRESOURCEW(res: u16) -> PWSTR {
     transmute(res as usize)
 }
 

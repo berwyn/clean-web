@@ -84,25 +84,6 @@ fn mangle_url(text: &str) -> String {
 
             let host = url.host().unwrap().to_string();
 
-            // TODO: Move this into a default config
-            if host == "twitter.com" {
-                let mut permissable_pairs = Vec::new();
-                for (key, value) in url.query_pairs() {
-                    if key != "t" && key != "s" {
-                        permissable_pairs.push((key.into_owned(), value.into_owned()));
-                    }
-                }
-
-                if permissable_pairs.is_empty() {
-                    url.set_query(None);
-                } else {
-                    url.query_pairs_mut()
-                        .clear()
-                        .extend_pairs(permissable_pairs.iter())
-                        .finish();
-                }
-            }
-
             for (host_regex, param_regex) in CONFIG.iter() {
                 if host_regex.is_match(&host) {
                     let mut permissable_pairs = Vec::new();

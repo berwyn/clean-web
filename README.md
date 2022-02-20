@@ -12,4 +12,4 @@ Configuration is kept in `%APPDATA%\CleanWeb\config\config.csv`. The application
 | host regex    | parameter regex |
 | :------------ | :-------------- |
 | `.*`          | `utm_.*`        |
-| `twitter.com` | `s|t`           |
+| `twitter.com` | `s\|t`          |

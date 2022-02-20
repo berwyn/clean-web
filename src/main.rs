@@ -21,15 +21,8 @@ const WINDOW_CLASS_NAME: &str = "CleanWeb";
 pub type Win32Result<T> = Result<T, windows::core::Error>;
 
 static CONFIG: Lazy<Config> = Lazy::new(|| {
-    if let Some(dirs) = directories::ProjectDirs::from("dev.berwyn", "CleanWeb", "CleanWeb") {
-        let path = dirs.config_dir();
-        let mut path = path.to_owned();
-        path.push("config.csv");
-
-        path.try_into().unwrap_or_default()
-    } else {
-        Default::default()
-    }
+    let path = Config::csv_path().expect("Config path should be valid");
+    path.try_into().unwrap_or_default()
 });
 
 fn main() {

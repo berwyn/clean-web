@@ -2,22 +2,28 @@
 
 use clipboard::Clipboard;
 use config::Config;
+use menu::MenuOptions;
 use once_cell::sync::Lazy;
 use tray::TrayIcon;
 use url::Url;
 use window::Window;
 use windows::Win32::{
     Foundation::{HWND, LPARAM, LRESULT, WPARAM},
-    UI::WindowsAndMessaging::{DefWindowProcW, WM_CLIPBOARDUPDATE},
+    UI::WindowsAndMessaging::{
+        DefWindowProcW, DestroyWindow, PostQuitMessage, WM_APP, WM_CLIPBOARDUPDATE, WM_CLOSE,
+        WM_DESTROY, WM_RBUTTONUP,
+    },
 };
 
 mod clipboard;
 mod config;
+mod menu;
 mod tray;
 mod util;
 mod window;
 
 const WINDOW_CLASS_NAME: &str = "CleanWeb";
+const WM_APP_TRAYMSG: u32 = WM_APP + 1;
 
 pub type Win32Result<T> = Result<T, windows::core::Error>;
 
@@ -52,6 +58,26 @@ unsafe extern "system" fn message_handler(
                 LRESULT(1),
                 |handled| if handled { LRESULT(0) } else { LRESULT(1) },
             )
+        }
+        WM_APP_TRAYMSG => match lparam.0 as u32 {
+            WM_RBUTTONUP => {
+                match menu::show_menu(hwnd) {
+                    Some(MenuOptions::Exit) => {
+                        DestroyWindow(hwnd);
+                    }
+                    None => {}
+                }
+                LRESULT(0)
+            }
+            _ => DefWindowProcW(hwnd, message, wparam, lparam),
+        },
+        WM_CLOSE => {
+            DestroyWindow(hwnd);
+            LRESULT(0)
+        }
+        WM_DESTROY => {
+            PostQuitMessage(0);
+            LRESULT(0)
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

@@ -7,13 +7,15 @@ use windows::{
         Foundation::HWND,
         System::LibraryLoader::GetModuleHandleW,
         UI::{
-            Shell::{Shell_NotifyIconW, NIF_ICON, NIM_ADD, NIM_DELETE, NOTIFYICONDATAW},
+            Shell::{
+                Shell_NotifyIconW, NIF_ICON, NIF_MESSAGE, NIM_ADD, NIM_DELETE, NOTIFYICONDATAW,
+            },
             WindowsAndMessaging::{LoadIconW, HICON},
         },
     },
 };
 
-use crate::{window::Window, Win32Result};
+use crate::{window::Window, Win32Result, WM_APP_TRAYMSG};
 
 const NOTIFICATION_ID: u32 = 0xDEADBEEF;
 
@@ -26,7 +28,8 @@ fn create_notification_data(hwnd: HWND) -> NOTIFYICONDATAW {
         uID: NOTIFICATION_ID,
         hWnd: hwnd,
         hIcon: *ICON,
-        uFlags: NIF_ICON,
+        uFlags: NIF_ICON | NIF_MESSAGE,
+        uCallbackMessage: WM_APP_TRAYMSG,
         ..Default::default()
     }
 }

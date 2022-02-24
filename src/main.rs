@@ -60,15 +60,13 @@ unsafe extern "system" fn message_handler(
             )
         }
         WM_APP_TRAYMSG => match lparam.0 as u32 {
-            WM_RBUTTONUP => {
-                match menu::show_menu(hwnd) {
-                    Some(MenuOptions::Exit) => {
-                        DestroyWindow(hwnd);
-                    }
-                    None => {}
+            WM_RBUTTONUP => match menu::show_menu(hwnd) {
+                Some(MenuOptions::Exit) => {
+                    DestroyWindow(hwnd);
+                    LRESULT(0)
                 }
-                LRESULT(0)
-            }
+                None => LRESULT(0),
+            },
             _ => DefWindowProcW(hwnd, message, wparam, lparam),
         },
         WM_CLOSE => {

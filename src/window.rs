@@ -1,7 +1,7 @@
 use std::mem::size_of;
 
 use windows::Win32::{
-    Foundation::{HWND, PWSTR},
+    Foundation::HWND,
     System::DataExchange::AddClipboardFormatListener,
     UI::WindowsAndMessaging::{
         CreateWindowExW, DispatchMessageW, GetMessageW, RegisterClassExW, TranslateMessage,
@@ -9,7 +9,7 @@ use windows::Win32::{
     },
 };
 
-use crate::Win32Result;
+use crate::{util::string_to_pcwstr, Win32Result};
 
 pub struct Window {
     pub hwnd: HWND,
@@ -17,11 +17,9 @@ pub struct Window {
 
 impl Window {
     pub fn new(class_name: &str, handler: WNDPROC) -> Win32Result<Self> {
-        let mut name = String::from(class_name);
-        let name = PWSTR(name.as_mut_ptr() as *mut u16);
         let wnd_class = WNDCLASSEXW {
             cbSize: size_of::<WNDCLASSEXW>() as u32,
-            lpszClassName: name,
+            lpszClassName: string_to_pcwstr(class_name),
             lpfnWndProc: handler,
             ..Default::default()
         };
@@ -34,10 +32,10 @@ impl Window {
 
         let hwnd = unsafe {
             CreateWindowExW(
-                0,
-                name,
-                name,
-                0,
+                Default::default(),
+                class_name,
+                class_name,
+                Default::default(),
                 0,
                 0,
                 0,

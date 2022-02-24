@@ -14,6 +14,7 @@ use windows::Win32::{
 mod clipboard;
 mod config;
 mod tray;
+mod util;
 mod window;
 
 const WINDOW_CLASS_NAME: &str = "CleanWeb";

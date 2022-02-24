@@ -1,19 +1,19 @@
-use std::mem::{size_of, transmute};
+use std::{intrinsics::transmute, mem::size_of};
 
 use once_cell::sync::Lazy;
-use windows::Win32::{
-    Foundation::{HWND, PWSTR},
-    System::LibraryLoader::GetModuleHandleW,
-    UI::{
-        Shell::{Shell_NotifyIconW, NIF_ICON, NOTIFYICONDATAW},
-        WindowsAndMessaging::{LoadIconW, HICON},
+use windows::{
+    core::PCWSTR,
+    Win32::{
+        Foundation::HWND,
+        System::LibraryLoader::GetModuleHandleW,
+        UI::{
+            Shell::{Shell_NotifyIconW, NIF_ICON, NIM_ADD, NIM_DELETE, NOTIFYICONDATAW},
+            WindowsAndMessaging::{LoadIconW, HICON},
+        },
     },
 };
 
 use crate::{window::Window, Win32Result};
-
-const NIM_ADD: u32 = 0x0;
-const NIM_DELETE: u32 = 0x2;
 
 const NOTIFICATION_ID: u32 = 0xDEADBEEF;
 
@@ -32,7 +32,7 @@ fn create_notification_data(hwnd: HWND) -> NOTIFYICONDATAW {
 }
 
 #[allow(non_snake_case)]
-unsafe fn MAKEINTRESOURCEW(res: u16) -> PWSTR {
+unsafe fn MAKEINTRESOURCEW(res: u16) -> PCWSTR {
     transmute(res as usize)
 }
 

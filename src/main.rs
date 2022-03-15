@@ -61,11 +61,8 @@ unsafe extern "system" fn message_handler(
         }
         WM_APP_TRAYMSG => match lparam.0 as u32 {
             WM_RBUTTONUP => {
-                match menu::show_menu(hwnd) {
-                    Some(MenuOptions::Exit) => {
-                        DestroyWindow(hwnd);
-                    }
-                    None => {}
+                if let Some(MenuOptions::Exit) = menu::show_menu(hwnd) {
+                    DestroyWindow(hwnd);
                 }
                 LRESULT(0)
             }
@@ -91,28 +88,31 @@ fn manage_clipboard(hwnd: HWND) -> Win32Result<bool> {
         let text = clipboard.get_contents()?;
         let updated_text = mangle_url(&text);
 
-        if text == updated_text {
-            Ok(false)
-        } else {
-            clipboard.set_contents(&updated_text)
+        match updated_text {
+            Some(updated_text) if text == updated_text => Ok(false),
+            Some(updated_text) => clipboard.set_contents(&updated_text),
+            None => Ok(false),
         }
     } else {
         Ok(false)
     }
 }
 
-fn mangle_url(text: &str) -> String {
+fn mangle_url(text: &str) -> Option<String> {
     match Url::parse(text) {
-        Err(_) => text.to_owned(),
+        Err(_) => None,
         Ok(mut url) => {
             if !url.has_host() {
-                return url.to_string();
+                return None;
             }
 
             let host = url.host().unwrap().to_string();
 
+            let mut any_matches = false;
             for (host_regex, param_regex) in CONFIG.iter() {
                 if host_regex.is_match(&host) {
+                    any_matches = true;
+
                     let mut permissable_pairs = Vec::new();
 
                     for (key, value) in url.query_pairs() {
@@ -132,7 +132,11 @@ fn mangle_url(text: &str) -> String {
                 }
             }
 
-            url.to_string()
+            if any_matches {
+                Some(url.to_string())
+            } else {
+                None
+            }
         }
     }
 }
